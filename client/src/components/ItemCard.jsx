@@ -1,4 +1,3 @@
-import React from 'react';
 import GlassCard from './GlassCard';
 
 // Category-based dynamic visual svg placeholders for ultra-premium feel

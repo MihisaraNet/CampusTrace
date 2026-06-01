@@ -1,4 +1,3 @@
-import React from 'react';
 import GlassCard from './GlassCard';
 
 const MetricCard = ({ title, value, icon, accentColor = 'var(--accent-primary)' }) => {

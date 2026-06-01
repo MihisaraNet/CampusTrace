@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import GlassCard from '../components/GlassCard';
@@ -21,27 +21,6 @@ const LoginRegister = () => {
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
   const [passwordStrength, setPasswordStrength] = useState({ score: 0, label: '', color: '' });
-
-  // Redirect if already logged in
-  useEffect(() => {
-    if (user) {
-      navigate('/');
-    }
-  }, [user, navigate]);
-
-  // Clear global context errors on tab switch
-  useEffect(() => {
-    clearError();
-    setFormData({ name: '', email: '', studentId: '', password: '', confirmPassword: '' });
-    setErrors({});
-    setTouched({});
-    setPasswordStrength({ score: 0, label: '', color: '' });
-  }, [activeTab]);
-
-  // Real-time validation trigger
-  useEffect(() => {
-    validateForm();
-  }, [formData, activeTab]);
 
   const validateForm = () => {
     const newErrors = {};
@@ -112,6 +91,30 @@ const LoginRegister = () => {
 
     setErrors(newErrors);
   };
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user) {
+      navigate('/');
+    }
+  }, [user, navigate]);
+
+  // Clear global context errors on tab switch
+  const handleTabSwitch = (tab) => {
+    setActiveTab(tab);
+    clearError();
+    setFormData({ name: '', email: '', studentId: '', password: '', confirmPassword: '' });
+    setErrors({});
+    setTouched({});
+    setPasswordStrength({ score: 0, label: '', color: '' });
+  };
+
+  // Real-time validation trigger
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    validateForm();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formData, activeTab]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -187,7 +190,7 @@ const LoginRegister = () => {
           }}
         >
           <button
-            onClick={() => setActiveTab('login')}
+            onClick={() => handleTabSwitch('login')}
             style={{
               padding: '12px',
               border: 'none',
@@ -203,7 +206,7 @@ const LoginRegister = () => {
             Sign In
           </button>
           <button
-            onClick={() => setActiveTab('register')}
+            onClick={() => handleTabSwitch('register')}
             style={{
               padding: '12px',
               border: 'none',

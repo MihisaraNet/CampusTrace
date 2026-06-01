@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import GlassCard from '../components/GlassCard';
@@ -39,11 +39,6 @@ const ReportItem = () => {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const [success, setSuccess] = useState(false);
-
-  // Trigger form validations
-  useEffect(() => {
-    validateForm();
-  }, [form, reportType]);
 
   const validateForm = () => {
     const newErrors = {};
@@ -87,6 +82,13 @@ const ReportItem = () => {
 
     setErrors(newErrors);
   };
+
+  // Trigger form validations
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    validateForm();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form, reportType]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;

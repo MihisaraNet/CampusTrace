@@ -1,5 +1,3 @@
-import React from 'react';
-
 const GlassCard = ({ children, className = '', hoverEffect = false, ...props }) => {
   return (
     <div

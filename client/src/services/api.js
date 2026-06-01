@@ -156,7 +156,6 @@ const handleMock = async (url, options) => {
     const userId = token.replace('mock_jwt_token_', '');
     const items = mockDb.getItems('lost');
     
-    let imageUrl = '';
     if (options.body instanceof FormData) {
       // Create object from form data for mocks
       const form = {};
