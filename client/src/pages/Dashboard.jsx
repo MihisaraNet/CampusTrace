@@ -383,6 +383,7 @@ const Dashboard = () => {
               padding: '32px',
               position: 'relative',
               boxShadow: '0 20px 50px rgba(0, 0, 0, 0.3)',
+              background: 'var(--glass-modal-bg)',
             }}
             onClick={(e) => e.stopPropagation()} // Prevent close on card click
           >

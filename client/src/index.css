@@ -41,6 +41,15 @@
   --shadow-glow: 0 8px 32px 0 rgba(99, 102, 241, 0.1);
   --shadow-card: 0 4px 20px -2px rgba(15, 23, 42, 0.05);
   --glow-color: rgba(99, 102, 241, 0.15);
+
+  /* Modal & Form visibility enhancements */
+  --glass-modal-bg: rgba(255, 255, 255, 0.95);
+  --input-bg: #ffffff;
+  --input-border: rgba(15, 23, 42, 0.15);
+  --input-placeholder: rgba(15, 23, 42, 0.45);
+  --btn-secondary-bg: #f1f5f9;
+  --btn-secondary-border: rgba(15, 23, 42, 0.08);
+  --btn-secondary-hover: #e2e8f0;
 }
 
 /* Dark Theme Overrides */
@@ -58,6 +67,15 @@
   --shadow-glow: 0 8px 32px 0 rgba(139, 92, 246, 0.25);
   --shadow-card: 0 8px 24px -4px rgba(0, 0, 0, 0.5);
   --glow-color: rgba(139, 92, 246, 0.35);
+
+  /* Modal & Form visibility enhancements */
+  --glass-modal-bg: rgba(15, 17, 26, 0.95);
+  --input-bg: rgba(0, 0, 0, 0.25);
+  --input-border: rgba(255, 255, 255, 0.15);
+  --input-placeholder: rgba(255, 255, 255, 0.4);
+  --btn-secondary-bg: rgba(255, 255, 255, 0.05);
+  --btn-secondary-border: rgba(255, 255, 255, 0.08);
+  --btn-secondary-hover: rgba(255, 255, 255, 0.15);
 }
 
 body {
@@ -158,14 +176,19 @@ body::after {
 .input-field {
   width: 100%;
   padding: 12px 16px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid var(--glass-border);
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
   border-radius: var(--radius-md);
   color: var(--text-primary);
   font-family: var(--font-sans);
   font-size: 1rem;
   transition: var(--transition-fast);
   outline: none;
+}
+
+.input-field::placeholder {
+  color: var(--input-placeholder);
+  opacity: 1;
 }
 
 .input-field:focus {
@@ -229,13 +252,13 @@ body::after {
 }
 
 .btn-secondary {
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
+  background: var(--btn-secondary-bg);
+  border: 1px solid var(--btn-secondary-border);
   color: var(--text-primary);
 }
 
 .btn-secondary:hover:not(:disabled) {
-  background: var(--bg-secondary);
+  background: var(--btn-secondary-hover);
   transform: translateY(-2px);
 }
 
