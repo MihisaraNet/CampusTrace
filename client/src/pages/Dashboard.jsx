@@ -48,8 +48,8 @@ const Dashboard = () => {
         api.getLostItems(),
         api.getFoundItems()
       ]);
-      setLostItems(lost);
-      setFoundItems(found);
+      setLostItems(lost.items || lost);
+      setFoundItems(found.items || found);
     } catch (err) {
       console.error('Error fetching dashboard items:', err);
     } finally {
@@ -67,6 +67,10 @@ const Dashboard = () => {
     const activeList = feedType === 'lost' ? lostItems : foundItems;
     
     return activeList.filter((item) => {
+      // Show only active lost items or available found items in the feed
+      const expectedStatus = feedType === 'lost' ? 'active' : 'available';
+      if (item.status !== expectedStatus) return false;
+
       // 1. Category Filter
       const categoryMatch = selectedCategory === 'All' || item.category === selectedCategory;
       
