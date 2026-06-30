@@ -113,4 +113,6 @@ If you wish to test or present the frontend UI without setting up a backend serv
 ---
 
 ## 📄 License
-This project is licensed under the **ISC License**.
+This project is licensed under the **MIT License**.
+
+Copyright (c) 2026 Isula Mihisara (MihisaraNet). All rights reserved.

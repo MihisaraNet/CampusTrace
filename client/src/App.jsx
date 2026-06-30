@@ -3,6 +3,7 @@ import { ThemeProvider } from './context/ThemeContext';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Navbar from './components/Navbar';
+import Footer from './components/Footer';
 import LoginRegister from './pages/LoginRegister';
 import Dashboard from './pages/Dashboard';
 import ReportItem from './pages/ReportItem';
@@ -61,6 +62,7 @@ function App() {
                 <Route path="*" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
               </Routes>
             </main>
+            <Footer />
           </div>
         </BrowserRouter>
       </AuthProvider>
