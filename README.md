@@ -20,6 +20,7 @@ CampusTrace is a modern, high-end, full-stack Lost & Found web application tailo
 ### Premium Design & UX
 * **High-End Glassmorphic Styling**: Sleek UI designed with Outfit typography, custom scrollbars, and dynamic blurred background overlays.
 * **Dual-Theme Support**: Instant transitions between sophisticated light and dark modes with customized HSL color systems.
+* **Dedicated About Page**: Showcases app details and developer portfolios (Email, LinkedIn, GitHub) using interactive, clean SVG buttons.
 
 ---
 
@@ -43,7 +44,7 @@ CampusTrace/
 │   │   ├── components/     # Reusable UI components (GlassCard, ItemCard, etc.)
 │   │   ├── context/        # Auth & Theme state providers
 │   │   ├── pages/          # Main application views (Dashboard, Admin panel, etc.)
-│   │   ├── services/       # Failover-capable API integrations
+│   │   ├── services/       # API integrations with backend services
 │   │   ├── App.jsx         # App router and layouts
 │   │   └── index.css       # Core stylesheets and variables
 ├── config/                 # Database configuration
