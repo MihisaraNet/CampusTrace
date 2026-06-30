@@ -84,7 +84,7 @@ body {
   color: var(--text-primary);
   min-height: 100vh;
   overflow-x: hidden;
-  transition: var(--transition-smooth);
+  transition: background-color var(--transition-smooth), color var(--transition-smooth);
   position: relative;
 }
 
@@ -143,7 +143,7 @@ body::after {
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--glass-border);
   box-shadow: var(--shadow-card);
-  transition: var(--transition-smooth);
+  transition: background-color var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
 .glass-hover:hover {

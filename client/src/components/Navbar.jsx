@@ -118,6 +118,21 @@ const Navbar = () => {
             >
               My Claims
             </Link>
+            <Link
+              to="/about"
+              style={{
+                padding: '8px 16px',
+                borderRadius: '8px',
+                textDecoration: 'none',
+                fontSize: '0.9rem',
+                fontWeight: '600',
+                color: isActive('/about') ? 'var(--text-primary)' : 'var(--text-secondary)',
+                background: isActive('/about') ? 'var(--bg-secondary)' : 'transparent',
+                transition: 'var(--transition-fast)',
+              }}
+            >
+              About App
+            </Link>
 
             {/* Admin link (Only rendered if admin) */}
             {user.role === 'admin' && (
@@ -228,11 +243,25 @@ const Navbar = () => {
               </button>
             </div>
           ) : (
-            location.pathname !== '/login' && (
-              <Link to="/login" className="btn btn-primary" style={{ padding: '8px 16px', fontSize: '0.85rem', borderRadius: '8px' }}>
-                Login / Register
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <Link
+                to="/about"
+                style={{
+                  textDecoration: 'none',
+                  fontSize: '0.9rem',
+                  fontWeight: '600',
+                  color: isActive('/about') ? 'var(--text-primary)' : 'var(--text-secondary)',
+                  transition: 'var(--transition-fast)',
+                }}
+              >
+                About App
               </Link>
-            )
+              {location.pathname !== '/login' && (
+                <Link to="/login" className="btn btn-primary" style={{ padding: '8px 16px', fontSize: '0.85rem', borderRadius: '8px' }}>
+                  Login / Register
+                </Link>
+              )}
+            </div>
           )}
         </div>
       </div>

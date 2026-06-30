@@ -20,7 +20,6 @@ CampusTrace is a modern, high-end, full-stack Lost & Found web application tailo
 ### Premium Design & UX
 * **High-End Glassmorphic Styling**: Sleek UI designed with Outfit typography, custom scrollbars, and dynamic blurred background overlays.
 * **Dual-Theme Support**: Instant transitions between sophisticated light and dark modes with customized HSL color systems.
-* **Offline Mock Failover**: A robust frontend architecture that automatically falls back to an offline LocalStorage database if the Node/Express backend or MongoDB instance is unreachable.
 
 ---
 
@@ -100,15 +99,6 @@ Start the Vite development server:
 npm run dev
 ```
 The client app will open on `http://localhost:5173`.
-
----
-
-## 🔌 Offline Failover Mode
-If you wish to test or present the frontend UI without setting up a backend server or MongoDB:
-1. Ensure the backend server is stopped.
-2. Launch the frontend React app (`npm run dev` inside `client/`).
-3. The application will automatically detect that the backend is offline and switch to the **client-side Mock Database** (persisted in LocalStorage).
-4. Any registered users, reported items, or claims will save locally to your browser. Use the mock account `admin@campustrace.edu` (any password works) to access the administrator dashboard.
 
 ---
 

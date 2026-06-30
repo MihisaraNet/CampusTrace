@@ -9,6 +9,7 @@ import Dashboard from './pages/Dashboard';
 import ReportItem from './pages/ReportItem';
 import MyClaims from './pages/MyClaims';
 import AdminDashboard from './pages/AdminDashboard';
+import AboutApp from './pages/AboutApp';
 
 function App() {
   return (
@@ -17,10 +18,11 @@ function App() {
         <BrowserRouter>
           <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
             <Navbar />
-            <main style={{ flexGrow: 1 }}>
+            <main style={{ flexGrow: 1, flexShrink: 0 }}>
               <Routes>
-                {/* Public Auth Route */}
+                {/* Public Routes */}
                 <Route path="/login" element={<LoginRegister />} />
+                <Route path="/about" element={<AboutApp />} />
 
                 {/* Protected Student Routes */}
                 <Route
