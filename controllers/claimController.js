@@ -2,8 +2,13 @@ const asyncHandler = require('express-async-handler');
 const Claim = require('../models/Claim');
 const LostItem = require('../models/LostItem');
 const FoundItem = require('../models/FoundItem');
+const {
+  notifyClaimSubmitted,
+  notifyClaimReviewed,
+  notifyItemReturned,
+} = require('../services/notificationService');
 
-// @desc    Submit a claim for a found item
+// @desc    Submit a claim for an item
 // @route   POST /api/claims
 // @access  Private
 const submitClaim = asyncHandler(async (req, res) => {
@@ -27,6 +32,22 @@ const submitClaim = asyncHandler(async (req, res) => {
     throw new Error('Item not found');
   }
 
+  // Prevent claiming items that are already resolved/claimed/returned
+  if (item.status === 'returned' || item.status === 'claimed') {
+    res.status(400);
+    throw new Error(`This item has already been marked as ${item.status}`);
+  }
+
+  // Prevent users from claiming items they reported themselves
+  if (itemType === 'FoundItem' && item.finderId && item.finderId.toString() === req.user._id.toString()) {
+    res.status(400);
+    throw new Error('You cannot submit a claim for an item you reported as found');
+  }
+  if (itemType === 'LostItem' && item.ownerId && item.ownerId.toString() === req.user._id.toString()) {
+    res.status(400);
+    throw new Error('You are already the owner/reporter of this lost item');
+  }
+
   // Prevent duplicate claims by same user
   const existingClaim = await Claim.findOne({
     itemId,
@@ -42,10 +63,15 @@ const submitClaim = asyncHandler(async (req, res) => {
     itemId,
     itemType,
     userId: req.user._id,
-    claimReason,
-    proofDetails,
-    studentIdProvided,
+    claimReason: claimReason.trim(),
+    proofDetails: proofDetails ? proofDetails.trim() : '',
+    studentIdProvided: studentIdProvided ? studentIdProvided.trim() : '',
   });
+
+  // Trigger claim notifications (admins & finder)
+  notifyClaimSubmitted(claim, item, req.user).catch((err) =>
+    console.error('Failed to dispatch claim submitted notification:', err)
+  );
 
   res.status(201).json(claim);
 });
@@ -69,8 +95,11 @@ const getMyClaims = asyncHandler(async (req, res) => {
 // @access  Private/Admin
 const getAllClaims = asyncHandler(async (req, res) => {
   const { status, page = 1, limit = 20 } = req.query;
+  const pageNum = Math.max(1, parseInt(page, 10) || 1);
+  const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10) || 20));
+
   const query = status ? { status } : {};
-  const skip = (Number(page) - 1) * Number(limit);
+  const skip = (pageNum - 1) * limitNum;
 
   const [claims, total] = await Promise.all([
     Claim.find(query)
@@ -78,11 +107,11 @@ const getAllClaims = asyncHandler(async (req, res) => {
       .populate({ path: 'itemId', select: 'itemName category image status' })
       .sort({ createdAt: -1 })
       .skip(skip)
-      .limit(Number(limit)),
+      .limit(limitNum),
     Claim.countDocuments(query),
   ]);
 
-  res.json({ claims, total, page: Number(page), pages: Math.ceil(total / Number(limit)) });
+  res.json({ claims, total, page: pageNum, pages: Math.ceil(total / limitNum) });
 });
 
 // @desc    Review a claim (approve/reject)
@@ -103,19 +132,32 @@ const reviewClaim = asyncHandler(async (req, res) => {
   }
 
   claim.status = status;
-  claim.adminResponse = adminResponse || '';
+  claim.adminResponse = adminResponse ? adminResponse.trim() : '';
   claim.reviewedBy = req.user._id;
   claim.reviewedAt = new Date();
 
   // If approved, update item status
+  const Model = claim.itemType === 'LostItem' ? LostItem : FoundItem;
+  let item = null;
   if (status === 'approved') {
-    const Model = claim.itemType === 'LostItem' ? LostItem : FoundItem;
-    await Model.findByIdAndUpdate(claim.itemId, {
-      status: claim.itemType === 'LostItem' ? 'matched' : 'claimed',
-    });
+    item = await Model.findByIdAndUpdate(
+      claim.itemId,
+      {
+        status: claim.itemType === 'LostItem' ? 'matched' : 'claimed',
+      },
+      { new: true }
+    );
+  } else {
+    item = await Model.findById(claim.itemId);
   }
 
   const updated = await claim.save();
+
+  // Trigger claim reviewed notification to claimant
+  notifyClaimReviewed(claim, status, adminResponse, item).catch((err) =>
+    console.error('Failed to dispatch claim reviewed notification:', err)
+  );
+
   res.json(updated);
 });
 
@@ -135,7 +177,16 @@ const markReturned = asyncHandler(async (req, res) => {
   }
 
   const Model = claim.itemType === 'LostItem' ? LostItem : FoundItem;
-  await Model.findByIdAndUpdate(claim.itemId, { status: 'returned' });
+  const item = await Model.findByIdAndUpdate(
+    claim.itemId,
+    { status: 'returned' },
+    { new: true }
+  );
+
+  // Trigger item returned notification to claimant
+  notifyItemReturned(claim, item).catch((err) =>
+    console.error('Failed to dispatch item returned notification:', err)
+  );
 
   res.json({ message: 'Item marked as returned successfully' });
 });

@@ -59,4 +59,13 @@ export const api = {
   getAllClaims: (status) => request(`/claims${status ? `?status=${status}` : ''}`),
   reviewClaim: (id, data) => request(`/claims/${id}/review`, { method: 'PUT', body: JSON.stringify(data) }),
   markReturned: (id) => request(`/claims/${id}/return`, { method: 'PUT' }),
+
+  // Notifications
+  getNotifications: (unreadOnly = false, page = 1, limit = 20) =>
+    request(`/notifications?unreadOnly=${unreadOnly}&page=${page}&limit=${limit}`),
+  getUnreadNotificationCount: () => request('/notifications/unread-count'),
+  markNotificationAsRead: (id) => request(`/notifications/${id}/read`, { method: 'PUT' }),
+  markAllNotificationsAsRead: () => request('/notifications/read-all', { method: 'PUT' }),
+  deleteNotification: (id) => request(`/notifications/${id}`, { method: 'DELETE' }),
+  clearAllNotifications: () => request('/notifications', { method: 'DELETE' }),
 };

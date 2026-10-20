@@ -1,6 +1,9 @@
 const asyncHandler = require('express-async-handler');
 const FoundItem = require('../models/FoundItem');
 const { cloudinary } = require('../middleware/upload');
+const { notifyNewFoundItemPublished } = require('../services/notificationService');
+
+const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 // @desc    Create a found item report
 // @route   POST /api/found
@@ -18,14 +21,19 @@ const createFoundItem = asyncHandler(async (req, res) => {
     : { url: '', publicId: '' };
 
   const foundItem = await FoundItem.create({
-    itemName,
+    itemName: itemName.trim(),
     category,
-    description,
+    description: description.trim(),
     image: imageData,
-    foundLocation,
+    foundLocation: foundLocation.trim(),
     dateFound,
     finderId: req.user._id,
   });
+
+  // Broadcast notification to all campus users & match lost items
+  notifyNewFoundItemPublished(foundItem, req.user).catch((err) =>
+    console.error('Failed to broadcast found item notification:', err)
+  );
 
   res.status(201).json(foundItem);
 });
@@ -36,31 +44,36 @@ const createFoundItem = asyncHandler(async (req, res) => {
 const getFoundItems = asyncHandler(async (req, res) => {
   const { search, category, status, location, page = 1, limit = 12 } = req.query;
 
+  const pageNum = Math.max(1, parseInt(page, 10) || 1);
+  const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10) || 12));
+
   const query = {};
 
-  if (search) {
-    query.$text = { $search: search };
+  if (search && search.trim()) {
+    query.$text = { $search: search.trim() };
   }
   if (category) query.category = category;
   if (status) query.status = status;
-  if (location) query.foundLocation = { $regex: location, $options: 'i' };
+  if (location && location.trim()) {
+    query.foundLocation = { $regex: escapeRegex(location.trim()), $options: 'i' };
+  }
 
-  const skip = (Number(page) - 1) * Number(limit);
+  const skip = (pageNum - 1) * limitNum;
 
   const [items, total] = await Promise.all([
     FoundItem.find(query)
       .populate('finderId', 'name email studentId')
       .sort({ createdAt: -1 })
       .skip(skip)
-      .limit(Number(limit)),
+      .limit(limitNum),
     FoundItem.countDocuments(query),
   ]);
 
   res.json({
     items,
     total,
-    page: Number(page),
-    pages: Math.ceil(total / Number(limit)),
+    page: pageNum,
+    pages: Math.ceil(total / limitNum),
   });
 });
 
@@ -101,18 +114,18 @@ const updateFoundItem = asyncHandler(async (req, res) => {
   }
 
   if (req.file) {
-    if (item.image.publicId) {
+    if (item.image && item.image.publicId) {
       await cloudinary.uploader.destroy(item.image.publicId);
     }
     item.image = { url: req.file.path, publicId: req.file.filename };
   }
 
-  item.itemName = req.body.itemName || item.itemName;
-  item.category = req.body.category || item.category;
-  item.description = req.body.description || item.description;
-  item.foundLocation = req.body.foundLocation || item.foundLocation;
-  item.dateFound = req.body.dateFound || item.dateFound;
-  item.status = req.body.status || item.status;
+  if (req.body.itemName) item.itemName = req.body.itemName.trim();
+  if (req.body.category) item.category = req.body.category;
+  if (req.body.description) item.description = req.body.description.trim();
+  if (req.body.foundLocation) item.foundLocation = req.body.foundLocation.trim();
+  if (req.body.dateFound) item.dateFound = req.body.dateFound;
+  if (req.body.status) item.status = req.body.status;
 
   const updated = await item.save();
   res.json(updated);
@@ -137,7 +150,7 @@ const deleteFoundItem = asyncHandler(async (req, res) => {
     throw new Error('Not authorized to delete this item');
   }
 
-  if (item.image.publicId) {
+  if (item.image && item.image.publicId) {
     await cloudinary.uploader.destroy(item.image.publicId);
   }
 
