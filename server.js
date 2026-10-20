@@ -1,11 +1,12 @@
 require('dotenv').config();
 const path = require('path');
 const checkEnv = require('./config/envCheck');
+const http = require('http');
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
-const rateLimit = require('express-rate-limit');
 const connectDB = require('./config/db');
+const { initWebSocket } = require('./services/socketService');
 
 // Validate environment variables before connecting to the DB
 checkEnv();
@@ -16,11 +17,16 @@ const lostRoutes = require('./routes/lostRoutes');
 const foundRoutes = require('./routes/foundRoutes');
 const claimRoutes = require('./routes/claimRoutes');
 const adminRoutes = require('./routes/adminRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
 
 // Connect to MongoDB
 connectDB();
 
 const app = express();
+const server = http.createServer(app);
+
+// Initialize WebSocket real-time server
+initWebSocket(server);
 
 // ─── Middleware ────────────────────────────────────────────────────────────────
 app.use(helmet());
@@ -31,32 +37,29 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Rate limiting for auth routes
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  limit: 10, // Limit each IP to 10 requests per `window` (here, per 15 minutes)
-  standardHeaders: 'draft-7',
-  legacyHeaders: false,
-  message: { message: 'Too many login attempts from this IP, please try again after 15 minutes' },
-});
-
 // ─── Routes ───────────────────────────────────────────────────────────────────
-app.use('/api/auth', authLimiter, authRoutes);
+app.use('/api/auth', authRoutes);
 app.use('/api/lost', lostRoutes);
 app.use('/api/found', foundRoutes);
 app.use('/api/claims', claimRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'CampusTrace API is running 🎒' });
 });
 
+// ─── 404 Handler for Unknown API Endpoints ─────────────────────────────────────
+app.use('/api', (req, res) => {
+  res.status(404).json({ message: `API endpoint not found: ${req.originalUrl}` });
+});
+
 // ─── Serve Frontend (Production) ──────────────────────────────────────────────
 if (process.env.NODE_ENV === 'production') {
   app.use(express.static(path.join(__dirname, 'client', 'dist')));
 
-  app.get('*', (req, res) => {
+  app.use((req, res) => {
     res.sendFile(path.resolve(__dirname, 'client', 'dist', 'index.html'));
   });
 }
@@ -72,6 +75,6 @@ app.use((err, req, res, next) => {
 
 // ─── Start Server ─────────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`🚀 CampusTrace server running on http://localhost:${PORT}`);
 });

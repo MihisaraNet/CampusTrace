@@ -4,6 +4,8 @@ const LostItem = require('../models/LostItem');
 const FoundItem = require('../models/FoundItem');
 const Claim = require('../models/Claim');
 
+const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 // @desc    Get dashboard statistics
 // @route   GET /api/admin/stats
 // @access  Private/Admin
@@ -45,18 +47,28 @@ const getDashboardStats = asyncHandler(async (req, res) => {
 // @access  Private/Admin
 const getAllUsers = asyncHandler(async (req, res) => {
   const { page = 1, limit = 20, search } = req.query;
-  const query = search
-    ? { $or: [{ name: { $regex: search, $options: 'i' } }, { email: { $regex: search, $options: 'i' } }, { studentId: { $regex: search, $options: 'i' } }] }
+  const pageNum = Math.max(1, parseInt(page, 10) || 1);
+  const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10) || 20));
+
+  const cleanSearch = search ? escapeRegex(search.trim()) : '';
+  const query = cleanSearch
+    ? {
+        $or: [
+          { name: { $regex: cleanSearch, $options: 'i' } },
+          { email: { $regex: cleanSearch, $options: 'i' } },
+          { studentId: { $regex: cleanSearch, $options: 'i' } },
+        ],
+      }
     : {};
 
-  const skip = (Number(page) - 1) * Number(limit);
+  const skip = (pageNum - 1) * limitNum;
 
   const [users, total] = await Promise.all([
-    User.find(query).select('-password').sort({ createdAt: -1 }).skip(skip).limit(Number(limit)),
+    User.find(query).select('-password').sort({ createdAt: -1 }).skip(skip).limit(limitNum),
     User.countDocuments(query),
   ]);
 
-  res.json({ users, total, page: Number(page), pages: Math.ceil(total / Number(limit)) });
+  res.json({ users, total, page: pageNum, pages: Math.ceil(total / limitNum) });
 });
 
 // @desc    Update user role

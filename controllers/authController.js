@@ -2,6 +2,8 @@ const asyncHandler = require('express-async-handler');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 // Generate JWT token
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '30d' });
@@ -18,20 +20,38 @@ const registerUser = asyncHandler(async (req, res) => {
     throw new Error('Please fill in all fields');
   }
 
+  const cleanEmail = email.trim().toLowerCase();
+  const cleanStudentId = studentId.trim();
+
+  if (!EMAIL_REGEX.test(cleanEmail)) {
+    res.status(400);
+    throw new Error('Please enter a valid email address');
+  }
+
+  if (password.length < 6) {
+    res.status(400);
+    throw new Error('Password must be at least 6 characters long');
+  }
+
   // Check if email or studentId already exists
-  const emailExists = await User.findOne({ email });
+  const emailExists = await User.findOne({ email: cleanEmail });
   if (emailExists) {
     res.status(400);
     throw new Error('Email already registered');
   }
 
-  const studentIdExists = await User.findOne({ studentId });
+  const studentIdExists = await User.findOne({ studentId: cleanStudentId });
   if (studentIdExists) {
     res.status(400);
     throw new Error('Student ID already registered');
   }
 
-  const user = await User.create({ name, email, studentId, password });
+  const user = await User.create({
+    name: name.trim(),
+    email: cleanEmail,
+    studentId: cleanStudentId,
+    password,
+  });
 
   if (user) {
     res.status(201).json({
@@ -59,7 +79,8 @@ const loginUser = asyncHandler(async (req, res) => {
     throw new Error('Please provide email and password');
   }
 
-  const user = await User.findOne({ email });
+  const cleanEmail = email.trim().toLowerCase();
+  const user = await User.findOne({ email: cleanEmail });
 
   if (user && (await user.matchPassword(password))) {
     res.json({
@@ -100,10 +121,25 @@ const updateProfile = asyncHandler(async (req, res) => {
     throw new Error('User not found');
   }
 
-  user.name = req.body.name || user.name;
-  user.studentId = req.body.studentId || user.studentId;
+  if (req.body.name) {
+    user.name = req.body.name.trim();
+  }
+
+  if (req.body.studentId && req.body.studentId.trim() !== user.studentId) {
+    const cleanStudentId = req.body.studentId.trim();
+    const existing = await User.findOne({ studentId: cleanStudentId, _id: { $ne: user._id } });
+    if (existing) {
+      res.status(400);
+      throw new Error('Student ID is already in use by another account');
+    }
+    user.studentId = cleanStudentId;
+  }
 
   if (req.body.password) {
+    if (req.body.password.length < 6) {
+      res.status(400);
+      throw new Error('Password must be at least 6 characters long');
+    }
     user.password = req.body.password;
   }
 

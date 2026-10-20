@@ -1,10 +1,15 @@
+import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { useNotifications } from '../context/NotificationContext';
+import NotificationDropdown from './NotificationDropdown';
 
 const Navbar = () => {
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const { unreadCount } = useNotifications();
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -157,7 +162,82 @@ const Navbar = () => {
         )}
 
         {/* Right side Action Bar */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', position: 'relative' }}>
+          {/* Notification Alert Bell (When logged in) */}
+          {user && (
+            <div style={{ position: 'relative' }}>
+              <button
+                onClick={() => setIsNotificationsOpen((prev) => !prev)}
+                style={{
+                  background: isNotificationsOpen ? 'var(--accent-primary)' : 'var(--bg-secondary)',
+                  border: '1px solid var(--glass-border)',
+                  width: '40px',
+                  height: '40px',
+                  borderRadius: '10px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: isNotificationsOpen ? '#ffffff' : 'var(--text-primary)',
+                  transition: 'var(--transition-smooth)',
+                  outline: 'none',
+                  position: 'relative',
+                }}
+                title="Notifications & Alerts"
+                aria-label="Notifications"
+                onMouseOver={(e) => (e.currentTarget.style.transform = 'scale(1.05)')}
+                onMouseOut={(e) => (e.currentTarget.style.transform = 'scale(1)')}
+              >
+                {/* Bell Icon */}
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                  <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                </svg>
+
+                {/* Live Unread Badge */}
+                {unreadCount > 0 && (
+                  <span
+                    style={{
+                      position: 'absolute',
+                      top: '-4px',
+                      right: '-4px',
+                      backgroundColor: 'var(--color-danger)',
+                      color: '#ffffff',
+                      fontSize: '0.68rem',
+                      fontWeight: '800',
+                      minWidth: '18px',
+                      height: '18px',
+                      borderRadius: '999px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      padding: '0 4px',
+                      boxShadow: '0 0 8px rgba(239, 68, 68, 0.6)',
+                      animation: 'pulseBadge 2s infinite',
+                    }}
+                  >
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </span>
+                )}
+              </button>
+
+              {/* Notification Dropdown */}
+              <NotificationDropdown
+                isOpen={isNotificationsOpen}
+                onClose={() => setIsNotificationsOpen(false)}
+              />
+            </div>
+          )}
+
           {/* Custom Theme Switcher Button */}
           <button
             onClick={toggleTheme}
@@ -270,6 +350,16 @@ const Navbar = () => {
         {`
           @keyframes spin {
             100% { transform: rotate(360deg); }
+          }
+          @keyframes pulseBadge {
+            0%, 100% {
+              transform: scale(1);
+              box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+            }
+            50% {
+              transform: scale(1.1);
+              box-shadow: 0 0 0 4px rgba(239, 68, 68, 0);
+            }
           }
         `}
       </style>
